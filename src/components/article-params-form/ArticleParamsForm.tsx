@@ -3,11 +3,10 @@ import { Button } from 'src/ui/button';
 
 import styles from './ArticleParamsForm.module.scss';
 import { useState } from 'react';
+import clsx from 'clsx';
 
 export const ArticleParamsForm = () => {
 	const [isOpen, setIsOpen] = useState(false);
-	const rootStyle = [styles.container];
-	isOpen && rootStyle.push(styles.container_open);
 
 	const handleClick = () => {
 		setIsOpen((prev) => !prev);
@@ -16,7 +15,8 @@ export const ArticleParamsForm = () => {
 	return (
 		<>
 			<ArrowButton isOpen={isOpen} onClick={handleClick} />
-			<aside className={rootStyle.join(' ')}>
+			<aside
+				className={clsx(styles.container, isOpen && styles.container_open)}>
 				<form className={styles.form}>
 					<div className={styles.bottomContainer}>
 						<Button title='Сбросить' htmlType='reset' type='clear' />
