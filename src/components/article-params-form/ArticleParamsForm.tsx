@@ -2,7 +2,7 @@ import { ArrowButton } from 'src/ui/arrow-button';
 import { Button } from 'src/ui/button';
 
 import styles from './ArticleParamsForm.module.scss';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import clsx from 'clsx';
 import { Select } from 'src/ui/select';
 import {
@@ -11,72 +11,110 @@ import {
 	fontColors,
 	fontFamilyOptions,
 	fontSizeOptions,
+	OptionType,
 } from 'src/constants/articleProps';
-import { useOutsideClickClose } from 'src/ui/select/hooks/useOutsideClickClose';
 import { RadioGroup } from 'src/ui/radio-group';
 import { Separator } from 'src/ui/separator';
 import { Text } from 'src/ui/text';
 
-export const ArticleParamsForm = (props: any) => {
-	const [isOpen, setIsOpen] = useState(false);
-	const rootRef = useRef<HTMLDivElement>(null);
+interface ArticleParamsFormProps {
+	handleChange: (name: string) => (selected: OptionType) => void;
+	state: {
+		fontFamilyOption: OptionType;
+		fontColor: OptionType;
+		backgroundColor: OptionType;
+		contentWidth: OptionType;
+		fontSizeOption: OptionType;
+	};
+	applyForm: () => void;
+	resetForm: () => void;
+}
 
-	const handleClick = () => {
+export const ArticleParamsForm: React.FC<ArticleParamsFormProps> = ({
+	handleChange,
+	state,
+	applyForm,
+	resetForm,
+}) => {
+	const [isOpen, setIsOpen] = useState(false);
+	const rootRef: React.RefObject<HTMLDivElement> = useRef(null);
+
+	const handleMenuClick = () => {
 		setIsOpen((prev) => !prev);
 	};
 
-	// создать адаптированный под наш
-	useOutsideClickClose({
-		isOpen,
-		rootRef,
-		onChange: setIsOpen,
-	});
+	useEffect(() => {
+		const handleOutsideClick = (e: MouseEvent) => {
+			if (e.target instanceof Node && !rootRef.current?.contains(e.target)) {
+				isOpen && handleMenuClick();
+			}
+		};
+
+		window.addEventListener('mousedown', handleOutsideClick);
+
+		return () => {
+			window.removeEventListener('mousedown', handleOutsideClick);
+		};
+	}, [isOpen]);
+
+	const handleApply = (e: React.FormEvent<HTMLFormElement>) => {
+		e.preventDefault();
+		applyForm();
+	};
+
+	const handleReset = (e: React.FormEvent<HTMLFormElement>) => {
+		e.preventDefault();
+		resetForm();
+	};
 
 	return (
 		<>
-			<ArrowButton isOpen={isOpen} onClick={handleClick} />
+			<ArrowButton isOpen={isOpen} onClick={handleMenuClick} />
 			<aside
 				className={clsx(styles.container, { [styles.container_open]: isOpen })}
 				ref={rootRef}>
-				<form className={styles.form}>
+				<form
+					className={styles.form}
+					onSubmit={handleApply}
+					onReset={handleReset}>
 					<div className={styles.topContainer}>
 						<Text as='h2' size={31} weight={800} uppercase={true}>
 							Задайте параметры
 						</Text>
 						<Select
-							selected={props.state.fontFamilyOption}
+							selected={state.fontFamilyOption}
 							options={fontFamilyOptions}
 							title='Шрифт'
-							onChange={props.handleChange('fontFamilyOption')}
+							onChange={handleChange('fontFamilyOption')}
 						/>
 						<RadioGroup
 							name='font'
-							selected={props.state.fontSizeOption}
+							selected={state.fontSizeOption}
 							options={fontSizeOptions}
 							title='Размер шрифта'
-							onChange={props.handleChange('fontSizeOption')}
+							onChange={handleChange('fontSizeOption')}
 						/>
 						<Select
-							selected={props.state.fontColor}
+							selected={state.fontColor}
 							options={fontColors}
 							title='Цвет шрифта'
-							onChange={props.handleChange('fontColor')}
+							onChange={handleChange('fontColor')}
 						/>
 
 						<Separator />
 
 						<Select
-							selected={props.state.backgroundColor}
+							selected={state.backgroundColor}
 							options={backgroundColors}
 							title='Цвет фона'
-							onChange={props.handleChange('backgroundColor')}
+							onChange={handleChange('backgroundColor')}
 						/>
 
 						<Select
-							selected={props.state.contentWidth}
+							selected={state.contentWidth}
 							options={contentWidthArr}
 							title='Ширина контента'
-							onChange={props.handleChange('contentWidth')}
+							onChange={handleChange('contentWidth')}
 						/>
 					</div>
 					<div className={styles.bottomContainer}>
