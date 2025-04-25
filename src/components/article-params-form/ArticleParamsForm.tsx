@@ -8,6 +8,7 @@ import { Select } from 'src/ui/select';
 import {
 	backgroundColors,
 	contentWidthArr,
+	defaultArticleState,
 	fontColors,
 	fontFamilyOptions,
 	fontSizeOptions,
@@ -17,36 +18,56 @@ import { RadioGroup } from 'src/ui/radio-group';
 import { Separator } from 'src/ui/separator';
 import { Text } from 'src/ui/text';
 
+type TPageState = {
+	'--font-family': string;
+	'--font-size': string;
+	'--font-color': string;
+	'--container-width': string;
+	'--bg-color': string;
+};
+
 interface ArticleParamsFormProps {
-	handleChange: (name: string) => (selected: OptionType) => void;
-	state: {
-		fontFamilyOption: OptionType;
-		fontColor: OptionType;
-		backgroundColor: OptionType;
-		contentWidth: OptionType;
-		fontSizeOption: OptionType;
-	};
-	applyForm: () => void;
-	resetForm: () => void;
+	setPageState: (pageState: TPageState) => void;
 }
 
 export const ArticleParamsForm: React.FC<ArticleParamsFormProps> = ({
-	handleChange,
-	state,
-	applyForm,
-	resetForm,
+	setPageState,
 }) => {
-	const [isOpen, setIsOpen] = useState(false);
+	const [isMenuOpen, setIsMenuOpen] = useState(false);
 	const rootRef: React.RefObject<HTMLDivElement> = useRef(null);
 
+	const [formState, setFormState] = useState(defaultArticleState);
+
 	const handleMenuClick = () => {
-		setIsOpen((prev) => !prev);
+		setIsMenuOpen((prev) => !prev);
+	};
+
+	const applyForm = () => {
+		setPageState({
+			'--font-family': formState.fontFamilyOption.value,
+			'--font-size': formState.fontSizeOption.value,
+			'--font-color': formState.fontColor.value,
+			'--container-width': formState.contentWidth.value,
+			'--bg-color': formState.backgroundColor.value,
+		});
+	};
+
+	const resetForm = () => {
+		setFormState(defaultArticleState);
+		setPageState({
+			'--font-family': defaultArticleState.fontFamilyOption.value,
+			'--font-size': defaultArticleState.fontSizeOption.value,
+			'--font-color': defaultArticleState.fontColor.value,
+			'--container-width': defaultArticleState.contentWidth.value,
+			'--bg-color': defaultArticleState.backgroundColor.value,
+		});
 	};
 
 	useEffect(() => {
+		if (!isMenuOpen) return;
 		const handleOutsideClick = (e: MouseEvent) => {
 			if (e.target instanceof Node && !rootRef.current?.contains(e.target)) {
-				isOpen && handleMenuClick();
+				isMenuOpen && handleMenuClick();
 			}
 		};
 
@@ -55,7 +76,7 @@ export const ArticleParamsForm: React.FC<ArticleParamsFormProps> = ({
 		return () => {
 			window.removeEventListener('mousedown', handleOutsideClick);
 		};
-	}, [isOpen]);
+	}, [isMenuOpen]);
 
 	const handleApply = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
@@ -67,11 +88,20 @@ export const ArticleParamsForm: React.FC<ArticleParamsFormProps> = ({
 		resetForm();
 	};
 
+	const handleChange = (name: string) => (selected: OptionType) => {
+		setFormState((prev) => ({
+			...prev,
+			[name]: selected,
+		}));
+	};
+
 	return (
 		<>
-			<ArrowButton isOpen={isOpen} onClick={handleMenuClick} />
+			<ArrowButton isOpen={isMenuOpen} onClick={handleMenuClick} />
 			<aside
-				className={clsx(styles.container, { [styles.container_open]: isOpen })}
+				className={clsx(styles.container, {
+					[styles.container_open]: isMenuOpen,
+				})}
 				ref={rootRef}>
 				<form
 					className={styles.form}
@@ -82,20 +112,20 @@ export const ArticleParamsForm: React.FC<ArticleParamsFormProps> = ({
 							Задайте параметры
 						</Text>
 						<Select
-							selected={state.fontFamilyOption}
+							selected={formState.fontFamilyOption}
 							options={fontFamilyOptions}
 							title='Шрифт'
 							onChange={handleChange('fontFamilyOption')}
 						/>
 						<RadioGroup
 							name='font'
-							selected={state.fontSizeOption}
+							selected={formState.fontSizeOption}
 							options={fontSizeOptions}
 							title='Размер шрифта'
 							onChange={handleChange('fontSizeOption')}
 						/>
 						<Select
-							selected={state.fontColor}
+							selected={formState.fontColor}
 							options={fontColors}
 							title='Цвет шрифта'
 							onChange={handleChange('fontColor')}
@@ -104,14 +134,14 @@ export const ArticleParamsForm: React.FC<ArticleParamsFormProps> = ({
 						<Separator />
 
 						<Select
-							selected={state.backgroundColor}
+							selected={formState.backgroundColor}
 							options={backgroundColors}
 							title='Цвет фона'
 							onChange={handleChange('backgroundColor')}
 						/>
 
 						<Select
-							selected={state.contentWidth}
+							selected={formState.contentWidth}
 							options={contentWidthArr}
 							title='Ширина контента'
 							onChange={handleChange('contentWidth')}
